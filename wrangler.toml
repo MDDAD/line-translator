@@ -1,6 +1,7 @@
 name = "line-translator"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
+workers_dev = true
 routes = [
-  { pattern = "line-translator.siwu-translation.workers.dev", zone_name = "siwu-translation.workers.dev" }
+  { pattern = "line-translator.qakoala01.workers.dev" }
 ]
