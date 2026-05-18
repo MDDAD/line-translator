@@ -1,8 +1,9 @@
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const BUILD_DATE = new Date().toISOString().split('T')[0];
 
 export default {
   async fetch(request, env) {
+    // 只接受 POST 請求
     if (request.method !== 'POST') {
       return new Response('OK', { status: 200 });
     }
@@ -13,16 +14,30 @@ export default {
 
       for (const event of events) {
         if (event.type === 'message' && event.message.type === 'text') {
-          const userMessage = event.message.text.trim();
+          const userMessage = event.message.text;
           const replyToken = event.replyToken;
 
-          // 版本查詢指令 - 使用 startsWith 增加彈性
-          if (userMessage.startsWith('/version') || userMessage.startsWith('/ver') || userMessage.startsWith('版本')) {
+          // 除錯：印出收到的訊息
+          console.log('收到訊息:', JSON.stringify(userMessage));
+          console.log('第一個字:', userMessage.charCodeAt(0));
+
+          // 版本查詢指令
+          if (userMessage === '/version' || userMessage === '/ver' || userMessage === '/v' || userMessage === '版本') {
+            console.log('符合版本指令');
             const versionText = `🔧 翻譯機器人版本\n\n📌 版本：${VERSION}\n📅 建置日期：${BUILD_DATE}\n🌐 狀態：正常運作中`;
             await replyToLine(replyToken, versionText, env.LINE_CHANNEL_ACCESS_TOKEN);
             continue;
           }
 
+          // 測試指令 - 直接回應相同訊息
+          if (userMessage === '/test') {
+            console.log('符合測試指令');
+            await replyToLine(replyToken, `✅ 測試成功！版本：${VERSION}`, env.LINE_CHANNEL_ACCESS_TOKEN);
+            continue;
+          }
+
+          // 一般翻譯
+          console.log('執行翻譯');
           const results = await translateAll(userMessage, env);
           const replyText = results.join('\n');
           await replyToLine(replyToken, replyText, env.LINE_CHANNEL_ACCESS_TOKEN);
@@ -107,6 +122,7 @@ function decodeHTMLEntities(text) {
 }
 
 async function replyToLine(replyToken, text, accessToken) {
+  console.log('回覆 LINE:', text.substring(0, 50));
   await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
     headers: {
