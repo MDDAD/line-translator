@@ -1,3 +1,6 @@
+const VERSION = '1.0.0';
+const BUILD_DATE = new Date().toISOString().split('T')[0];
+
 export default {
   async fetch(request, env) {
     if (request.method !== 'POST') {
@@ -10,8 +13,15 @@ export default {
 
       for (const event of events) {
         if (event.type === 'message' && event.message.type === 'text') {
-          const userMessage = event.message.text;
+          const userMessage = event.message.text.trim();
           const replyToken = event.replyToken;
+
+          // 版本查詢指令
+          if (userMessage === '/version' || userMessage === '/ver' || userMessage === '版本') {
+            const versionText = `🔧 翻譯機器人版本\n\n📌 版本：${VERSION}\n📅 建置日期：${BUILD_DATE}\n🌐 狀態：正常運作中`;
+            await replyToLine(replyToken, versionText, env.LINE_CHANNEL_ACCESS_TOKEN);
+            continue;
+          }
 
           const results = await translateAll(userMessage, env);
           const replyText = results.join('\n');
@@ -58,7 +68,6 @@ async function translateTo(text, sourceLang, targetLang, env) {
     'id': '🇮🇩'
   };
 
-  // Google Translate：zh-TW 是繁體中文，zh 是簡體中文
   const googleLangMap = {
     'zh': 'zh-TW',
     'en': 'en',
