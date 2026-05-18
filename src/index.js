@@ -1,4 +1,4 @@
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 const BUILD_DATE = new Date().toISOString().split('T')[0];
 
 export default {
@@ -16,8 +16,8 @@ export default {
           const userMessage = event.message.text.trim();
           const replyToken = event.replyToken;
 
-          // 版本查詢指令
-          if (userMessage === '/version' || userMessage === '/ver' || userMessage === '版本') {
+          // 版本查詢指令 - 使用 startsWith 增加彈性
+          if (userMessage.startsWith('/version') || userMessage.startsWith('/ver') || userMessage.startsWith('版本')) {
             const versionText = `🔧 翻譯機器人版本\n\n📌 版本：${VERSION}\n📅 建置日期：${BUILD_DATE}\n🌐 狀態：正常運作中`;
             await replyToLine(replyToken, versionText, env.LINE_CHANNEL_ACCESS_TOKEN);
             continue;
