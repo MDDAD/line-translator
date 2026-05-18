@@ -7,4 +7,4 @@
     "deploy": "wrangler deploy"
   },
   "keywords": ["line", "translator", "cloudflare-workers"]
-}
+}"# line-translator" 
