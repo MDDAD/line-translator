@@ -1,3 +1,5 @@
 name = "line-translator"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
+workers_dev = true
+route = "https://line-translator.siwu-translation.workers.dev"
