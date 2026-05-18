@@ -1,9 +1,8 @@
-const VERSION = '1.0.2';
+const VERSION = '1.0.3';
 const BUILD_DATE = new Date().toISOString().split('T')[0];
 
 export default {
   async fetch(request, env) {
-    // 只接受 POST 請求
     if (request.method !== 'POST') {
       return new Response('OK', { status: 200 });
     }
@@ -17,30 +16,10 @@ export default {
           const userMessage = event.message.text;
           const replyToken = event.replyToken;
 
-          // 除錯：印出收到的訊息
-          console.log('收到訊息:', JSON.stringify(userMessage));
-          console.log('第一個字:', userMessage.charCodeAt(0));
-
-          // 版本查詢指令
-          if (userMessage === '/version' || userMessage === '/ver' || userMessage === '/v' || userMessage === '版本') {
-            console.log('符合版本指令');
-            const versionText = `🔧 翻譯機器人版本\n\n📌 版本：${VERSION}\n📅 建置日期：${BUILD_DATE}\n🌐 狀態：正常運作中`;
-            await replyToLine(replyToken, versionText, env.LINE_CHANNEL_ACCESS_TOKEN);
-            continue;
-          }
-
-          // 測試指令 - 直接回應相同訊息
-          if (userMessage === '/test') {
-            console.log('符合測試指令');
-            await replyToLine(replyToken, `✅ 測試成功！版本：${VERSION}`, env.LINE_CHANNEL_ACCESS_TOKEN);
-            continue;
-          }
-
-          // 一般翻譯
-          console.log('執行翻譯');
-          const results = await translateAll(userMessage, env);
-          const replyText = results.join('\n');
-          await replyToLine(replyToken, replyText, env.LINE_CHANNEL_ACCESS_TOKEN);
+          // 直接回應收到的訊息內容（測試用）
+          const debugText = `收到：${JSON.stringify(userMessage)}\n長度：${userMessage.length}\n首字元：${userMessage.charCodeAt(0)}`;
+          await replyToLine(replyToken, debugText, env.LINE_CHANNEL_ACCESS_TOKEN);
+          continue;
         }
       }
     } catch (err) {
@@ -51,78 +30,7 @@ export default {
   }
 };
 
-async function translateAll(text, env) {
-  const sourceLang = detectLang(text);
-  const targetLangs = getTargetLangs(sourceLang);
-
-  const translations = await Promise.all(
-    targetLangs.map(lang => translateTo(text, sourceLang, lang, env))
-  );
-
-  return translations;
-}
-
-function detectLang(text) {
-  const chineseRegex = /[\u4e00-\u9fff]/;
-  const indonesianWords = ['yang', 'dan', 'di', 'ke', 'dari', 'ini', 'itu', 'untuk', 'dengan', 'ada', 'tidak', 'akan', 'sudah', 'saya', 'kamu', 'dia'];
-  const lowerText = text.toLowerCase();
-
-  if (chineseRegex.test(text)) return 'zh';
-  if (indonesianWords.some(word => lowerText.includes(word))) return 'id';
-  return 'en';
-}
-
-function getTargetLangs(sourceLang) {
-  return ['en', 'zh', 'id'].filter(lang => lang !== sourceLang);
-}
-
-async function translateTo(text, sourceLang, targetLang, env) {
-  const flags = {
-    'zh': '🇹🇼',
-    'en': '🇺🇸',
-    'id': '🇮🇩'
-  };
-
-  const googleLangMap = {
-    'zh': 'zh-TW',
-    'en': 'en',
-    'id': 'id'
-  };
-
-  const googleTarget = googleLangMap[targetLang];
-
-  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_KEY}`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      q: text,
-      target: googleTarget,
-      source: sourceLang === 'zh' ? 'zh-CN' : sourceLang
-    })
-  });
-
-  const data = await response.json();
-  const translated = decodeHTMLEntities(data.data.translations[0].translatedText);
-  const flag = flags[targetLang];
-
-  return `${flag} ${translated}`;
-}
-
-function decodeHTMLEntities(text) {
-  return text
-    .replace(/'/g, "'")
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, '"')
-    .replace(/'/g, "'")
-    .replace(/&#x2F;/g, "/");
-}
-
 async function replyToLine(replyToken, text, accessToken) {
-  console.log('回覆 LINE:', text.substring(0, 50));
   await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
     headers: {
