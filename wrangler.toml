@@ -2,3 +2,7 @@ name = "line-translator"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 workers_dev = true
+
+[[kv_namespaces]]
+binding = "TRANSLATOR_KV"
+id = "05f685f504aa4faaa2b1de19a839f2ad"
