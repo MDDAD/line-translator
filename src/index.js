@@ -13,6 +13,7 @@ export default {
 
       for (const event of events) {
         if (event.type === 'message' && event.message.type === 'text') {
+          console.log('RAW LINE TEXT:', JSON.stringify(event.message.text));
           const userMessage = decodeHTMLEntities(event.message.text);
           const replyToken = event.replyToken;
 
