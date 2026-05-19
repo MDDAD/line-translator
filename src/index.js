@@ -81,7 +81,7 @@ async function translateTo(text, sourceLang, targetLang, env) {
   };
 
   const googleTarget = googleLangMap[targetLang];
-  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_KEY}`;
+  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_API_KEY}`;
 
   const response = await fetch(url, {
     method: 'POST',
