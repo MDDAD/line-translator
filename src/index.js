@@ -43,7 +43,8 @@ export default {
 };
 
 async function translateAll(text, env) {
-  const sourceLang = detectLang(text);
+  // 用 Google API 偵測語言（最準）
+  const sourceLang = await detectLang(text, env);
   const targetLangs = getTargetLangs(sourceLang);
 
   const translations = await Promise.all(
@@ -53,14 +54,37 @@ async function translateAll(text, env) {
   return translations;
 }
 
-function detectLang(text) {
+async function detectLang(text, env) {
+  const url = `https://translation.googleapis.com/language/translate/v2/detect?key=${env.GOOGLE_TRANSLATE_API_KEY}`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: text })
+    });
+    const data = await res.json();
+    const lang = data.data.detections[0][0].language;
+    console.log('Detected lang:', lang, '(Google API)');
+    return lang;
+  } catch (e) {
+    console.error('Google detect failed, using local fallback:', e);
+  }
+  // fallback: 本地偵測
+  return detectLangLocal(text);
+}
+
+function detectLangLocal(text) {
   const chineseRegex = /[\u4e00-\u9fff]/;
   const indonesianWords = ['yang', 'dan', 'di', 'ke', 'dari', 'ini', 'itu', 'untuk', 'dengan', 'ada', 'tidak', 'akan', 'sudah', 'saya', 'kamu', 'dia'];
   const lowerText = text.toLowerCase();
 
-  if (chineseRegex.test(text)) return 'zh';
-  if (indonesianWords.some(word => lowerText.includes(word))) return 'id';
-  return 'en';
+  let lang;
+  if (chineseRegex.test(text)) lang = 'zh';
+  else if (indonesianWords.some(word => lowerText.includes(word))) lang = 'id';
+  else lang = 'en';
+
+  console.log('Detected lang:', lang, '(local fallback)');
+  return lang;
 }
 
 function getTargetLangs(sourceLang) {
@@ -74,7 +98,6 @@ async function translateTo(text, sourceLang, targetLang, env) {
     'id': '🇮🇩'
   };
 
-  // Google Translate：zh-TW 是繁體，zh 是簡體
   const googleLangMap = {
     'zh': 'zh-TW',
     'en': 'en',
@@ -90,7 +113,7 @@ async function translateTo(text, sourceLang, targetLang, env) {
     body: JSON.stringify({
       q: text,
       target: googleTarget,
-      source: sourceLang === 'zh' ? 'zh-CN' : undefined
+      source: sourceLang === 'zh' ? 'zh-CN' : (sourceLang === 'id' ? 'id' : undefined)
     })
   });
 
@@ -104,20 +127,17 @@ async function translateTo(text, sourceLang, targetLang, env) {
 function decodeHTMLEntities(text) {
   if (!text) return text;
   return text
-    // HTML numeric entities for apostrophe / single quote
-    .replace(/'/g, "'")   // hex entity for '
-    .replace(/'/g, "'")    // decimal entity for '
-    .replace(/&#x2018;/g, "'") // LEFT SINGLE QUOTATION MARK
-    .replace(/&#x2019;/g, "'") // RIGHT SINGLE QUOTATION MARK
-    .replace(/&#x2BC;/g, "'")  // MODIFIER LETTER APOSTROPHE
-    .replace(/&#x2F;/g, "/")   // forward slash
-    // Named entities
+    .replace(/'/g, "'")
+    .replace(/'/g, "'")
+    .replace(/&#x2018;/g, "'")
+    .replace(/&#x2019;/g, "'")
+    .replace(/&#x2BC;/g, "'")
+    .replace(/&#x2F;/g, "/")
     .replace(/&/g, "&")
     .replace(/</g, "<")
     .replace(/>/g, ">")
     .replace(/"/g, '"')
     .replace(/&apos;/g, "'")
-    // Curly apostrophes that may arrive already-decoded from LINE
     .replace(/\u2018/g, "'")
     .replace(/\u2019/g, "'")
     .replace(/\u02BC/g, "'");
