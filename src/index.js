@@ -13,7 +13,6 @@ export default {
 
       for (const event of events) {
         if (event.type === 'message' && event.message.type === 'text') {
-          console.log('RAW LINE TEXT:', JSON.stringify(event.message.text));
           const userMessage = decodeHTMLEntities(event.message.text);
           const replyToken = event.replyToken;
 
@@ -43,7 +42,6 @@ export default {
 };
 
 async function translateAll(text, env) {
-  // 用 Google API 偵測語言（最準）
   const sourceLang = await detectLang(text, env);
   const targetLangs = getTargetLangs(sourceLang);
 
@@ -63,13 +61,14 @@ async function detectLang(text, env) {
       body: JSON.stringify({ q: text })
     });
     const data = await res.json();
-    const lang = data.data.detections[0][0].language;
-    console.log('Detected lang:', lang, '(Google API)');
+    let lang = data.data.detections[0][0].language;
+    // 統一：zh-CN / zh-TW → zh
+    if (lang.startsWith('zh')) lang = 'zh';
+    console.log('Google detected:', lang);
     return lang;
   } catch (e) {
     console.error('Google detect failed, using local fallback:', e);
   }
-  // fallback: 本地偵測
   return detectLangLocal(text);
 }
 
@@ -78,50 +77,33 @@ function detectLangLocal(text) {
   const indonesianWords = ['yang', 'dan', 'di', 'ke', 'dari', 'ini', 'itu', 'untuk', 'dengan', 'ada', 'tidak', 'akan', 'sudah', 'saya', 'kamu', 'dia'];
   const lowerText = text.toLowerCase();
 
-  let lang;
-  if (chineseRegex.test(text)) lang = 'zh';
-  else if (indonesianWords.some(word => lowerText.includes(word))) lang = 'id';
-  else lang = 'en';
-
-  console.log('Detected lang:', lang, '(local fallback)');
-  return lang;
+  if (chineseRegex.test(text)) return 'zh';
+  if (indonesianWords.some(word => lowerText.includes(word))) return 'id';
+  return 'en';
 }
 
 function getTargetLangs(sourceLang) {
-  return ['en', 'zh', 'id'].filter(lang => lang !== sourceLang);
+  const all = ['en', 'zh', 'id'];
+  return all.filter(lang => lang !== sourceLang);
 }
 
 async function translateTo(text, sourceLang, targetLang, env) {
-  const flags = {
-    'zh': '🇹🇼',
-    'en': '🇺🇸',
-    'id': '🇮🇩'
-  };
-
-  const googleLangMap = {
-    'zh': 'zh-TW',
-    'en': 'en',
-    'id': 'id'
-  };
+  const flags = { 'zh': '🇹🇼', 'en': '🇺🇸', 'id': '🇮🇩' };
+  const googleLangMap = { 'zh': 'zh-TW', 'en': 'en', 'id': 'id' };
 
   const googleTarget = googleLangMap[targetLang];
-  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_API_KEY}`;
+  const googleSource = (sourceLang === 'zh') ? 'zh-CN' : sourceLang;
 
+  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_API_KEY}`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      q: text,
-      target: googleTarget,
-      source: sourceLang === 'zh' ? 'zh-CN' : (sourceLang === 'id' ? 'id' : undefined)
-    })
+    body: JSON.stringify({ q: text, target: googleTarget, source: googleSource })
   });
 
   const data = await response.json();
   const translated = decodeHTMLEntities(data.data.translations[0].translatedText);
-  const flag = flags[targetLang];
-
-  return `${flag} ${translated}`;
+  return `${flags[targetLang]} ${translated}`;
 }
 
 function decodeHTMLEntities(text) {
@@ -150,9 +132,6 @@ async function replyToLine(replyToken, text, accessToken) {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      replyToken: replyToken,
-      messages: [{ type: 'text', text: text }]
-    })
+    body: JSON.stringify({ replyToken, messages: [{ type: 'text', text }] })
   });
 }
