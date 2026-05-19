@@ -13,14 +13,14 @@ export default {
 
       for (const event of events) {
         if (event.type === 'message' && event.message.type === 'text') {
-          const userMessage = event.message.text;
+          const userMessage = decodeHTMLEntities(event.message.text);
           const replyToken = event.replyToken;
 
           // 指令處理
           if (userMessage.startsWith('/')) {
             const cmd = userMessage.toLowerCase();
             if (cmd === '/version' || cmd === '/版本') {
-              await replyToLine(replyToken, `🤖 LINE 翻譯機器人\n版本：v${VERSION}\n建置日期：${BUILD_DATE}\n\n支援語言：🇹🇬 中文（繁體）｜🇺🇸 English ｜🇮🇩 Indonesia\n\n使用方法：\n直接傳送任何文字，機器人會自動偵測語言並翻譯成其他兩種語言。`, env.LINE_CHANNEL_ACCESS_TOKEN);
+              await replyToLine(replyToken, `🤖 LINE 翻譯機器人\n版本：v${VERSION}\n建置日期：${BUILD_DATE}\n\n支援語言：🇹🇼 中文（繁體）｜🇺🇸 English ｜🇮🇩 Indonesia\n\n使用方法：\n直接傳送任何文字，機器人會自動偵測語言並翻譯成其他兩種語言。`, env.LINE_CHANNEL_ACCESS_TOKEN);
             } else {
               await replyToLine(replyToken, `未知指令：${userMessage}\n\n可用指令：\n/version - 查看版本`, env.LINE_CHANNEL_ACCESS_TOKEN);
             }
@@ -94,29 +94,28 @@ async function translateTo(text, sourceLang, targetLang, env) {
   });
 
   const data = await response.json();
-  const translated = decodeHTMLEntities(data.data.translations[0].translatedText);
+  const translated = data.data.translations[0].translatedText;
   const flag = flags[targetLang];
 
   return `${flag} ${translated}`;
 }
 
 function decodeHTMLEntities(text) {
+  if (!text) return text;
   return text
-    .replace(/&#x2F;/g, "/")
-    .replace(/&#x2018/g, "'")
-    .replace(/&#x2019/g, "'")
-    .replace(/&#x2BC/g, "'")
-    .replace(/'/g, "'")
-    .replace(/'/g, "'")
-    .replace(/'/g, "'")
-    .replace(/'/g, "'")
-    .replace(/'/g, "'")
-    .replace(/'/g, "'")
+    // Handle numeric/hex HTML entities for apostrophe-quote characters
+    .replace(/'/g, "'")   // hex entity for '
+    .replace(/'/g, "'")    // decimal entity for '
+    .replace(/&#x2018;/g, "'") // LEFT SINGLE QUOTATION MARK
+    .replace(/&#x2019;/g, "'") // RIGHT SINGLE QUOTATION MARK
+    .replace(/&#x2BC;/g, "'")  // MODIFIER LETTER APOSTROPHE
+    .replace(/&#x2F;/g, "/")   // forward slash
+    // Handle named entities
     .replace(/&/g, "&")
     .replace(/</g, "<")
     .replace(/>/g, ">")
     .replace(/"/g, '"')
-    .replace(/'/g, "'");
+    .replace(/&apos;/g, "'");
 }
 
 async function replyToLine(replyToken, text, accessToken) {
