@@ -103,12 +103,15 @@ async function translateTo(text, sourceLang, targetLang, env) {
 function decodeHTMLEntities(text) {
   return text
     .replace(/'/g, "'")
+    .replace(/'/g, "'")
+    .replace(/&#x2F;/g, "/")
     .replace(/&/g, "&")
     .replace(/</g, "<")
     .replace(/>/g, ">")
     .replace(/"/g, '"')
     .replace(/'/g, "'")
-    .replace(/&#x2F;/g, "/");
+    .replace(/'/g, "'")
+    .replace(/'/g, "'");
 }
 
 async function replyToLine(replyToken, text, accessToken) {
