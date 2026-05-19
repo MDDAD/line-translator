@@ -252,7 +252,7 @@ async function translateTo(text, sourceLang, targetLang, env) {
   const googleSourceMap = { 'zh': 'zh-CN', 'ja': 'ja', 'ko': 'ko', 'id': 'id', 'th': 'th', 'vi': 'vi', 'ms': 'ms', 'es': 'es', 'en': 'en' };
   const googleSource = googleSourceMap[sourceLang] || sourceLang;
 
-  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_KEY}`;
+  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_API_KEY}`;
 
   const response = await fetch(url, {
     method: 'POST',
