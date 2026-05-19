@@ -90,7 +90,7 @@ async function translateTo(text, sourceLang, targetLang, env) {
     body: JSON.stringify({
       q: text,
       target: googleTarget,
-      source: sourceLang === 'zh' ? 'zh-CN' : sourceLang
+      source: sourceLang === 'zh' ? 'zh-CN' : undefined
     })
   });
 
