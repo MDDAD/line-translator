@@ -95,7 +95,7 @@ async function translateTo(text, sourceLang, targetLang, env) {
   });
 
   const data = await response.json();
-  const translated = data.data.translations[0].translatedText;
+  const translated = decodeHTMLEntities(data.data.translations[0].translatedText);
   const flag = flags[targetLang];
 
   return `${flag} ${translated}`;
@@ -104,19 +104,23 @@ async function translateTo(text, sourceLang, targetLang, env) {
 function decodeHTMLEntities(text) {
   if (!text) return text;
   return text
-    // Handle numeric/hex HTML entities for apostrophe-quote characters
+    // HTML numeric entities for apostrophe / single quote
     .replace(/'/g, "'")   // hex entity for '
     .replace(/'/g, "'")    // decimal entity for '
     .replace(/&#x2018;/g, "'") // LEFT SINGLE QUOTATION MARK
     .replace(/&#x2019;/g, "'") // RIGHT SINGLE QUOTATION MARK
     .replace(/&#x2BC;/g, "'")  // MODIFIER LETTER APOSTROPHE
     .replace(/&#x2F;/g, "/")   // forward slash
-    // Handle named entities
+    // Named entities
     .replace(/&/g, "&")
     .replace(/</g, "<")
     .replace(/>/g, ">")
     .replace(/"/g, '"')
-    .replace(/&apos;/g, "'");
+    .replace(/&apos;/g, "'")
+    // Curly apostrophes that may arrive already-decoded from LINE
+    .replace(/\u2018/g, "'")
+    .replace(/\u2019/g, "'")
+    .replace(/\u02BC/g, "'");
 }
 
 async function replyToLine(replyToken, text, accessToken) {
