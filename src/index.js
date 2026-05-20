@@ -1,5 +1,5 @@
-const VERSION = '2.0.2';
-const BUILD_DATE = new Date().toISOString().split('T')[0];
+const VERSION = '2.0.3';
+const BUILD_DATE = '2026-05-20';
 
 export default {
   async fetch(request, env) {
