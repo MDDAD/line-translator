@@ -111,6 +111,8 @@ function decodeHTMLEntities(text) {
   return text
     .replace(/'/g, "'")
     .replace(/'/g, "'")
+    .replace(/'/g, "'")
+    .replace(/'/g, "'")
     .replace(/&#x2018;/g, "'")
     .replace(/&#x2019;/g, "'")
     .replace(/&#x2BC;/g, "'")
