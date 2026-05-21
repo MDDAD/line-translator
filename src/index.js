@@ -53,7 +53,7 @@ async function translateAll(text, env) {
 }
 
 async function detectLang(text, env) {
-  const url = `https://translation.googleapis.com/language/translate/v2/detect?key=${env.GOOGLE_TRANSLATE_KEY}`;
+  const url = `https://translation.googleapis.com/language/translate/v2/detect?key=${env.GOOGLE_TRANSLATE_API_KEY}`;
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -94,7 +94,7 @@ async function translateTo(text, sourceLang, targetLang, env) {
   const googleTarget = googleLangMap[targetLang];
   const googleSource = (sourceLang === 'zh') ? 'zh-CN' : sourceLang;
 
-  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_KEY}`;
+  const url = `https://translation.googleapis.com/language/translate/v2?key=${env.GOOGLE_TRANSLATE_API_KEY}`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -109,10 +109,6 @@ async function translateTo(text, sourceLang, targetLang, env) {
 function decodeHTMLEntities(text) {
   if (!text) return text;
   return text
-    .replace(/'/g, "'")
-    .replace(/'/g, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'")
     .replace(/'/g, "'")
     .replace(/'/g, "'")
     .replace(/&#x2018;/g, "'")
