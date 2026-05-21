@@ -120,6 +120,8 @@ function decodeHTMLEntities(text) {
     .replace(/>/g, ">")
     .replace(/"/g, '"')
     .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
     .replace(/\u2018/g, "'")
     .replace(/\u2019/g, "'")
     .replace(/\u02BC/g, "'");
